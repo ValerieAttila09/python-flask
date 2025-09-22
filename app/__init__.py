@@ -22,4 +22,7 @@ def create_app(config_class=Config):
     from .main import main_bp
     app.register_blueprint(main_bp)
 
+    from .ml import ml_bp
+    app.register_blueprint(ml_bp)
+
     return app

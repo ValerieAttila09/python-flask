@@ -3,6 +3,12 @@
 <head>
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Add a border to the canvas */
+        canvas {
+            border: 2px solid #000;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow-md">
@@ -21,10 +27,103 @@
     </nav>
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div class="px-4 py-6 sm:px-0">
-            <div class="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
-                <h2 class="text-2xl text-gray-800">Welcome, {{ current_user.username }}!</h2>
+            <div class="border-4 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                <h2 class="text-2xl text-gray-800 mb-4">Welcome, {{ current_user.username }}!</h2>
+                
+                <!-- TensorFlow Digit Recognition Section -->
+                <div class="mt-8">
+                    <h1 class="text-3xl font-bold text-gray-900">Digit Recognizer</h1>
+                    <p class="text-gray-600 mt-2">Draw a digit from 0 to 9 in the box below.</p>
+                    
+                    <div class="flex justify-center mt-4">
+                         <canvas id="digit-canvas" width="280" height="280" class="bg-white cursor-crosshair"></canvas>
+                    </div>
+
+                    <div class="mt-4">
+                        <button id="predict-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Predict</button>
+                        <button id="clear-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">Clear</button>
+                    </div>
+                    
+                    <div id="result-container" class="mt-6 hidden">
+                        <h2 class="text-2xl text-gray-800">Prediction: <span id="prediction-result" class="font-bold"></span></h2>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('digit-canvas');
+            const ctx = canvas.getContext('2d');
+            const predictBtn = document.getElementById('predict-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const resultContainer = document.getElementById('result-container');
+            const predictionResult = document.getElementById('prediction-result');
+
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+
+            // Set up drawing context
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 20;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+
+            function draw(e) {
+                if (!isDrawing) return;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                // Adjust for canvas position
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+                [lastX, lastY] = [e.offsetX, e.offsetY];
+            }
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                [lastX, lastY] = [e.offsetX, e.offsetY];
+            });
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mouseout', () => isDrawing = false);
+
+            function clearCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                resultContainer.classList.add('hidden');
+            }
+
+            async function predictDigit() {
+                const imageData = canvas.toDataURL('image/png');
+
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ image: imageData })
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Prediction failed');
+                    }
+
+                    const data = await response.json();
+                    predictionResult.textContent = data.prediction;
+                    resultContainer.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred: ' + error.message);
+                }
+            }
+
+            clearBtn.addEventListener('click', clearCanvas);
+            predictBtn.addEventListener('click', predictDigit);
+        });
+    </script>
 </body>
 </html>
