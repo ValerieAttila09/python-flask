@@ -1,8 +1,0 @@
-{
-  "users": [
-    {
-      "username": "valerie",
-      "password_hash": "pbkdf2:sha256:1000000$TE5IPuzStdZu7pVN$99d8706bf8fac38479c992800dfbe4d54ddf11ee6bd3745add0a79dccbc801a8"
-    }
-  ]
-}
