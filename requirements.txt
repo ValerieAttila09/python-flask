@@ -3,3 +3,6 @@ Flask-Login
 Flask-WTF
 pymongo
 Flask-PyMongo
+tensorflow
+numpy
+Pillow
